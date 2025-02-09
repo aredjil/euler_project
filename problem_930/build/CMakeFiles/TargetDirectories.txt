@@ -1,0 +1,3 @@
+/home/aredjil/Documents/github_repos/euler_project/problem_930/build/CMakeFiles/main.x.dir
+/home/aredjil/Documents/github_repos/euler_project/problem_930/build/CMakeFiles/edit_cache.dir
+/home/aredjil/Documents/github_repos/euler_project/problem_930/build/CMakeFiles/rebuild_cache.dir

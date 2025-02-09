@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.19)
+
+project(gathering VERSION 1.0.0 LANGUAGES CXX)
+
+# Find OpenMP
+find_package(OpenMP)
+
+# Set the executable name
+set(EXECUTABLE_NAME main.x)
+
+# Add the executable target with its source files
+add_executable(${EXECUTABLE_NAME} src/main.cpp src/gather.cpp)
+
+if(OpenMP_CXX_FOUND)
+    # Enable OpenMP for your target
+    target_link_libraries(${EXECUTABLE_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
+# Include the header directory for this target
+target_include_directories(${EXECUTABLE_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/include)

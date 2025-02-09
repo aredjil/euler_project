@@ -1,0 +1,9 @@
+#include "gather.hpp"
+
+
+Bowls::Bowls(int num_bowls, int num_balls)
+: n(num_bowls)
+, m(num_balls)
+{
+   this->bowls.resize(n, 0);
+}

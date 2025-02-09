@@ -94,9 +94,7 @@ get_expected_steps(std::vector<int> &bowls, std::vector<int> &balls, const int &
         {
             step(balls, bowls);
             max = get_max(bowls);
-            #pragma omp atomic
             count++;
-            #pragma omp atomic
             counts[i] += 1;
         }
     }

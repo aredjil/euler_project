@@ -48,7 +48,6 @@ void init(std::vector<int> &balls, std::vector<int> &bowls)
     int rd_idx;
     // Intilizing the balls randomly in bowls
     std::uniform_int_distribution<int> dist(0, n - 1);
-#pragma omp parallel for
     for (int i = 0; i < m; i++)
     {
         rd_idx = dist(gen);
@@ -63,11 +62,11 @@ int get_max(const std::vector<int> &bowls)
     {
         auto max_it = std::max_element(bowls.begin(), bowls.end());
 
-        int max_value = *max_it;
+        // int max_value = *max_it;
 
-        int max_index = std::distance(bowls.begin(), max_it);
+        // int max_index = std::distance(bowls.begin(), max_it);
 
-        return max_value;
+        return *max_it;
     }
     else
     {
@@ -83,24 +82,22 @@ get_expected_steps(std::vector<int> &bowls, std::vector<int> &balls, const int &
     int n = bowls.size();
     int m = balls.size();
 
-    std::vector<double> counts(n_steps, 0.0);
-    #pragma omp parallel for
+    double sum = 0.0;
+#pragma omp parallel for
     for (int i = 0; i < n_steps; ++i)
     {
         init(balls, bowls);
         int max = get_max(bowls);
         int count = 0;
-        while (max != m)
+        for (; max != m; max = get_max(bowls))
         {
             step(balls, bowls);
-            max = get_max(bowls);
+#pragma omp atomic
             count++;
-            counts[i] += 1;
         }
+#pragma omp atomic
+        sum += count;
     }
 
-    double sum = std::accumulate(counts.begin(), counts.end(), 0);
-
-    double avg = sum / counts.size();
-    return avg;
+    return  sum / n_steps;
 }

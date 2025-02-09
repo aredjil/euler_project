@@ -7,6 +7,7 @@
 #include <string>
 #include <iomanip>
 #include <omp.h>
+#include<chrono>
 
 void 
 step(std::vector<int> &balls, std::vector<int> &bowls);

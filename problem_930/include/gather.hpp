@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <omp.h>
 #include<chrono>
+#include<mpi.h>
 // #include<execution>
 void 
 step(std::vector<int> &balls, std::vector<int> &bowls, const int &n,const int &m);

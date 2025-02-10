@@ -26,7 +26,7 @@ void init(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const 
 
     int rd_idx;
 
-#pragma omp parallel
+    // #pragma omp parallel
     for (int i = 0; i < m; ++i)
     {
         rd_idx = get_rd(0, n - 1);
@@ -39,10 +39,6 @@ int get_max(const std::vector<int> &bowls)
 {
     auto max_it = std::max_element(bowls.begin(), bowls.end());
 
-    // int max_value = *max_it;
-
-    // int max_index = std::distance(bowls.begin(), max_it);
-
     return *max_it;
 }
 
@@ -52,24 +48,21 @@ get_expected_steps(const int &n, const int &m, const int &n_steps)
     std::vector<int> bowls(n, 0);
     std::vector<int> balls(m, 0);
     double sum = 0.0;
-#pragma omp parallel
+    double local_sum = 0.0;
+#pragma omp parallel for reduction(+ : local_sum)
+    for (int i = 0; i < n_steps; ++i)
     {
-        double local_sum = 0.0;
-#pragma omp for
-        for (int i = 0; i < n_steps; ++i)
+        int local_count = 0;
+        init(balls, bowls, n, m);
+        int max = get_max(bowls);
+        while (max != m)
         {
-            int local_count = 0;
-            init(balls, bowls, n, m);
-            int max = get_max(bowls);
-            for (; max != m; max = get_max(bowls))
-            {
-                step(balls, bowls, n, m);
-                local_count++;
-            }
-            local_sum += local_count;
+            step(balls, bowls, n, m);
+            local_count++;
+            max = get_max(bowls);
         }
-#pragma omp critical
-        sum += local_sum;
+        local_sum += local_count;
     }
+    sum += local_sum;
     return sum / n_steps;
 }

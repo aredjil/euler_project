@@ -1,88 +1,75 @@
 #include "gather.hpp"
 
-std::random_device dv;
-std::mt19937 gen(dv());
-
-void step(std::vector<int> &balls, std::vector<int> &bowls)
+int get_rd(const int &lower, const int &upper)
 {
-    int m = balls.size();
-    int n = bowls.size();
-
-    int rd_ball;
-    int rd_dir;
-    // Choosing a random ball
-    std::uniform_int_distribution<int> choose_ball(0, m - 1);
-
-    // Printing the current location of the randomly choosen ball
-    rd_ball = choose_ball(gen);
-    // Generating a random direction (clockwise 1 or anticlockwise 0)
-
-    std::uniform_int_distribution<int> rd_direction(0, 1);
-    rd_dir = rd_direction(gen) * 2 - 1;
-
-    bowls[balls[rd_ball]] -= 1; // Removing the randomly chosen ball from its currrent location
-    int new_position = (balls[rd_ball] + rd_dir + n) % n;
-    bowls[new_position] += 1;      // Updating the bowls
-    balls[rd_ball] = new_position; // Updating the location of the ball
-
+    thread_local std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<int> dist(lower, upper);
+    return dist(gen);
 }
 
-void init(std::vector<int> &balls, std::vector<int> &bowls)
+void step(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const int &m)
 {
+    const int rd_ball = get_rd(0, m - 1);
+    const int rd_dir = get_rd(0, 1) * 2 - 1;
 
-    int n = bowls.size();
-    int m = balls.size();
+    bowls[balls[rd_ball]] -= 1; // Removing the randomly chosen ball from its currrent location
+    const int new_position = (balls[rd_ball] + rd_dir + n) % n;
+    bowls[new_position] += 1;      // Updating the bowls
+    balls[rd_ball] = new_position; // Updating the location of the ball
+}
+
+void init(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const int &m)
+{
 
     std::fill(balls.begin(), balls.end(), 0);
     std::fill(bowls.begin(), bowls.end(), 0);
 
     int rd_idx;
-    // Intilizing the balls randomly in bowls
-    std::uniform_int_distribution<int> dist(0, n - 1);
-    #pragma omp parallel for 
+
+#pragma omp parallel
     for (int i = 0; i < m; ++i)
     {
-        rd_idx = dist(gen);
+        rd_idx = get_rd(0, n - 1);
         balls[i] = rd_idx;
         bowls[rd_idx] += 1;
     }
 }
 
-int 
-get_max(const std::vector<int> &bowls)
+int get_max(const std::vector<int> &bowls)
 {
-        auto max_it = std::max_element(bowls.begin(), bowls.end());
+    auto max_it = std::max_element(bowls.begin(), bowls.end());
 
-        // int max_value = *max_it;
+    // int max_value = *max_it;
 
-        // int max_index = std::distance(bowls.begin(), max_it);
+    // int max_index = std::distance(bowls.begin(), max_it);
 
-        return *max_it;
+    return *max_it;
 }
 
 double
-get_expected_steps(std::vector<int> &bowls, std::vector<int> &balls, const int &n_steps)
+get_expected_steps(const int &n, const int &m, const int &n_steps)
 {
-
-    int n = bowls.size();
-    int m = balls.size();
-
+    std::vector<int> bowls(n, 0);
+    std::vector<int> balls(m, 0);
     double sum = 0.0;
-#pragma omp parallel for
-    for (int i = 0; i < n_steps; ++i)
+#pragma omp parallel
     {
-        init(balls, bowls);
-        int max = get_max(bowls);
-        int count = 0;
-        for (; max != m; max = get_max(bowls))
+        double local_sum = 0.0;
+#pragma omp for
+        for (int i = 0; i < n_steps; ++i)
         {
-            step(balls, bowls);
-#pragma omp atomic
-            count++;
+            int local_count = 0;
+            init(balls, bowls, n, m);
+            int max = get_max(bowls);
+            for (; max != m; max = get_max(bowls))
+            {
+                step(balls, bowls, n, m);
+                local_count++;
+            }
+            local_sum += local_count;
         }
-#pragma omp atomic
-        sum += count;
+#pragma omp critical
+        sum += local_sum;
     }
-
     return sum / n_steps;
 }

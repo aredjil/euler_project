@@ -8,18 +8,18 @@
 #include <iomanip>
 #include <omp.h>
 #include<chrono>
+// #include<execution>
+void 
+step(std::vector<int> &balls, std::vector<int> &bowls, const int &n,const int &m);
 
 void 
-step(std::vector<int> &balls, std::vector<int> &bowls);
-
-void 
-init(std::vector<int> &balls, std::vector<int> &bowls);
+init(std::vector<int> &balls, std::vector<int> &bowls, const int &n,const int &m);
 
 int 
 get_max(const std::vector<int> &bowls);
 
 double
-get_expected_steps(std::vector<int> &bowls, std::vector<int> &balls, const int &n_steps);
+get_expected_steps(const int &n,const int &m, const int &n_steps);
 
 #include "gather.hpp" 
 #endif // GATHER_H

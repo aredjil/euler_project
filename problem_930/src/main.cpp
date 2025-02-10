@@ -6,6 +6,7 @@ int main(int argc, char **argv)
     int n_steps{1000}; // Number of steps
     int N{3};
     int M{3};
+    
     for (int i = 1; i < argc; ++i)
     {
         if (std::string(argv[i]) == "-n" && i + 1 < argc)
@@ -29,10 +30,7 @@ int main(int argc, char **argv)
     {
         for (int m = 2; m <= M; ++m)
         {
-            std::vector<int> bowls(n, 0);
-            std::vector<int> balls(m, 0);
-            std::cout<<"Computing F("<<n<<","<<m<<")\n";
-            double expected_steps = get_expected_steps(bowls, balls, n_steps);
+            double expected_steps = get_expected_steps(n, m, n_steps);
 #pragma omp atomic
             total_sum += expected_steps;
         }

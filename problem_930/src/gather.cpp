@@ -39,7 +39,8 @@ void init(std::vector<int> &balls, std::vector<int> &bowls)
     int rd_idx;
     // Intilizing the balls randomly in bowls
     std::uniform_int_distribution<int> dist(0, n - 1);
-    for (int i = 0; i < m; i++)
+    #pragma omp parallel for 
+    for (int i = 0; i < m; ++i)
     {
         rd_idx = dist(gen);
         balls[i] = rd_idx;
@@ -47,10 +48,9 @@ void init(std::vector<int> &balls, std::vector<int> &bowls)
     }
 }
 
-int get_max(const std::vector<int> &bowls)
+int 
+get_max(const std::vector<int> &bowls)
 {
-    if (!bowls.empty())
-    {
         auto max_it = std::max_element(bowls.begin(), bowls.end());
 
         // int max_value = *max_it;
@@ -58,12 +58,6 @@ int get_max(const std::vector<int> &bowls)
         // int max_index = std::distance(bowls.begin(), max_it);
 
         return *max_it;
-    }
-    else
-    {
-        std::cout << "The vector is empty.\n";
-        return -1;
-    }
 }
 
 double

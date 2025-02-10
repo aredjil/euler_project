@@ -21,29 +21,27 @@ int main(int argc, char **argv)
             n_steps = std::atoi(argv[++i]);
         }
     }
-
+    auto start = std::chrono::high_resolution_clock::now();
     double total_sum = 0.0;
-    int count = 0;
     // Iterate over all combinations of n and m from 2 to 6
-#pragma omp parallel for collapse(2) reduction(+ : total_sum) reduction(+ : count)
+#pragma omp parallel for collapse(2) reduction(+ : total_sum) 
     for (int n = 2; n <= N; ++n)
     {
         for (int m = 2; m <= M; ++m)
         {
             std::vector<int> bowls(n, 0);
             std::vector<int> balls(m, 0);
-            std::cout<<count<<"/121\n\n";
             std::cout<<"Computing F("<<n<<","<<m<<")\n";
             double expected_steps = get_expected_steps(bowls, balls, n_steps);
 #pragma omp atomic
             total_sum += expected_steps;
-#pragma omp atomic
-            count++;
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "\nElapsed time: " << elapsed.count() << " seconds\n";
     std::cout << std::scientific << std::setprecision(12) << std::endl;
     std::cout << "Average Expected Steps: " << total_sum << std::endl;
 
-    // double avg = get_expected_steps(bowls, balls, n_steps);
     return 0;
 }

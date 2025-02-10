@@ -32,6 +32,7 @@ int main(int argc, char **argv)
         {
             std::vector<int> bowls(n, 0);
             std::vector<int> balls(m, 0);
+            std::cout<<"Computing G("<<n<<","<<m<<")\n";
             double expected_steps = get_expected_steps(bowls, balls, n_steps);
 #pragma omp atomic
             total_sum += expected_steps;

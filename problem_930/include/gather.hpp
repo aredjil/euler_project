@@ -20,7 +20,7 @@ int
 get_max(const std::vector<int> &bowls);
 
 double
-get_expected_steps(const int &n,const int &m, const int &n_steps);
+get_expected_steps(const int &n,const int &m, const int &n_steps, int rank, int size);
 
 #include "gather.hpp" 
 #endif // GATHER_H

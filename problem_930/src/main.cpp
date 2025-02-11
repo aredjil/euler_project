@@ -26,50 +26,33 @@ int main(int argc, char **argv)
             n_steps = std::atoi(argv[++i]);
         }
     }
-    // auto start = std::chrono::high_resolution_clock::now();
-    // double total_sum = 0.0;
-    // int count = 1;
-    // Iterate over all combinations of n and m from 2 to 6
-    // #pragma omp parallel for collapse(2) reduction(+ : total_sum)
-    //     for (int n = 2; n <= N; ++n)
-    //     {
-    //         for (int m = 2; m <= M; ++m)
-    //         {
-    //             double expected_steps = get_expected_steps(n, m, n_steps);
-    // #pragma omp atomic
-    //             total_sum += expected_steps;
-    //         }
-    //     }
+
     double local_sum = 0.0;
     double total_sum = 0.0;
 
-// Distribute 'n' iterations among processes
-#pragma omp parallel for collapse(2) reduction(+ : total_sum)
-    for (int n = 2 + rank; n <= N; n += size)
+    for (int n = 2; n <= N; ++n) // Don't distribute n across ranks
     {
         for (int m = 2; m <= M; ++m)
         {
-            #pragma omp atomic
-            local_sum += get_expected_steps(n, m, n_steps);
+            double local_result = get_expected_steps(n, m, n_steps, rank, size);
+            double global_result = 0.0;
+
+            MPI_Reduce(&local_result, &global_result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+            if (rank == 0)
+            {
+                local_sum += global_result;
+            }
         }
     }
-
-    // Reduce all local sums into total_sum on rank 0
-    MPI_Reduce(&local_sum, &total_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     if (rank == 0)
     {
         std::cout << std::scientific << std::setprecision(12) << std::endl;
-        std::cout << "Total sum: " << total_sum << std::endl;
+        std::cout << "Total sum: " << local_sum << std::endl;
     }
 
     MPI_Finalize();
-
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> elapsed = end - start;
-    // std::cout << "\nElapsed time: " << elapsed.count() << " seconds\n";
-    // std::cout << std::scientific << std::setprecision(12) << std::endl;
-    // std::cout << "Average Expected Steps: " << total_sum << std::endl;
 
     return 0;
 }

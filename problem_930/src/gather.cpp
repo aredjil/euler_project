@@ -2,7 +2,8 @@
 
 int get_rd(const int &lower, const int &upper)
 {
-    thread_local std::mt19937 gen(std::random_device{}());
+    // thread_local std::mt19937 gen(std::random_device{}());
+    thread_local std::mt19937 gen(1);
     std::uniform_int_distribution<int> dist(lower, upper);
     return dist(gen);
 }
@@ -26,7 +27,6 @@ void init(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const 
 
     int rd_idx;
 
-    // #pragma omp parallel
     for (int i = 0; i < m; ++i)
     {
         rd_idx = get_rd(0, n - 1);
@@ -43,14 +43,18 @@ int get_max(const std::vector<int> &bowls)
 }
 
 double
-get_expected_steps(const int &n, const int &m, const int &n_steps)
+get_expected_steps(const int &n, const int &m, const int &n_steps, int rank, int size)
 {
     std::vector<int> bowls(n, 0);
     std::vector<int> balls(m, 0);
-    double sum = 0.0;
+    int offset;
+    int partition = n_steps / size;
+    int rest = n_steps % size;
     double local_sum = 0.0;
-#pragma omp parallel for reduction(+ : local_sum)
-    for (int i = 0; i < n_steps; ++i)
+    int start = rank * partition + std::min(rank, rest);
+    int end = start + partition + (rank < rest ? 1 : 0);
+
+    for (int i = start; i < end; ++i)
     {
         int local_count = 0;
         init(balls, bowls, n, m);
@@ -63,6 +67,7 @@ get_expected_steps(const int &n, const int &m, const int &n_steps)
         }
         local_sum += local_count;
     }
-    sum += local_sum;
+    double sum = 0.0;
+    MPI_Reduce(&local_sum, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     return sum / n_steps;
 }

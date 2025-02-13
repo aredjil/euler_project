@@ -7,7 +7,7 @@ int get_rd(const int &lower, const int &upper)
     return dist(gen);
 }
 
-void step(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const int &m)
+void step(int* balls, int* bowls, const int &n, const int &m)
 {
     const int rd_ball = get_rd(0, m - 1);
     const int rd_dir = (get_rd(0, 1) << 1) - 1;
@@ -17,17 +17,18 @@ void step(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const 
     bowls[pos] += 1;
 }
 
-void init(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const int &m)
+void init(int* &balls, int* &bowls, const int &n, const int &m)
 {
-    std::vector<int> new_balls(m);
-    std::vector<int> new_bowls(n, 0);
+    int* new_balls = new int[m]();
+    int* new_bowls = new int[n]();
+    
     #ifdef _OPENACC
     #pragma acc parallel loop copyin(n) copyout(new_bowls[0:n])
     #endif 
     for (int i = 0; i < n; ++i) {
         new_bowls[i] = 0;
     }
-    
+
     for (int i = 0; i < m; ++i)
     {
         int rd_idx = get_rd(0, n - 1);
@@ -35,14 +36,16 @@ void init(std::vector<int> &balls, std::vector<int> &bowls, const int &n, const 
         new_bowls[rd_idx]++;
     }
     
-    balls.swap(new_balls);
-    bowls.swap(new_bowls);
+    delete[] bowls;  // Free old memory if needed
+    delete[] balls;  // Free old memory if needed
+
+    balls = new_balls;
+    bowls = new_bowls;
 }
 
-int get_max(const std::vector<int> &bowls)
+int get_max(const int* bowls, const int size)
 {
     int max_val = 0;
-    const int size = bowls.size();
     #ifdef _OPENACC
     #pragma acc parallel loop reduction(max:max_val) copyin(bowls[0:size])
     #endif
@@ -56,11 +59,12 @@ int get_max(const std::vector<int> &bowls)
 
 double get_expected_steps(const int &n, const int &m, const int &n_steps)
 {
-    std::vector<int> bowls(n, 0);
-    std::vector<int> balls(m, 0);
+    int* bowls = new int[n]();
+    int* balls = new int[m]();
     double sum = 0.0;
+    
     #ifdef _OPENACC
-    #pragma acc parallel loop reduction(+:sum) \
+//    #pragma acc parallel loop reduction(+:sum) \
         private(bowls, balls) \
         copyin(n, m)
     #endif
@@ -68,16 +72,21 @@ double get_expected_steps(const int &n, const int &m, const int &n_steps)
     {
         int local_count = 0;
         init(balls, bowls, n, m);
-        int max = get_max(bowls);
+        int max = get_max(bowls, n);
         
         while (max != m)
         {
             step(balls, bowls, n, m);
             local_count++;
-            max = get_max(bowls);
+            max = get_max(bowls, n);
         }
         sum += local_count;
     }
     
+    // Clean up dynamically allocated arrays
+    delete[] bowls;
+    delete[] balls;
+    
     return sum / n_steps;
 }
+

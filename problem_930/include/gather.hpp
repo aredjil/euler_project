@@ -8,8 +8,10 @@
 #include <iomanip>
 #include <omp.h>
 #include<chrono>
-#include<mpi.h>
-// #include<execution>
+
+#ifdef _OPENACC
+#include <openacc.h>
+#endif
 void 
 step(std::vector<int> &balls, std::vector<int> &bowls, const int &n,const int &m);
 
@@ -20,7 +22,7 @@ int
 get_max(const std::vector<int> &bowls);
 
 double
-get_expected_steps(const int &n,const int &m, const int &n_steps, int rank, int size);
+get_expected_steps(const int &n,const int &m, const int &n_steps);
 
 #include "gather.hpp" 
 #endif // GATHER_H
